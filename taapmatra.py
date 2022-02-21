@@ -58,15 +58,32 @@ def get_weather_data(query_url):
         else:
             sys.exit(f"Something went wrong. HTTP error code : {http_error.code}")
 
-    data     = response.read()
+    data = response.read()
 
     try:
         return json.loads(data)
     except json.JSONDecodeError:
         sys.exit("Couldn't read the server response.")
 
+def display_weather_info(weather_data, imperial=False):
+    """Prints formatted weather information about a city.
+
+    :weather_data: weather data in the form of a Python dictionary.
+    :imperial: Whether or not user wants information in imperial units.
+    :returns: None. Just displays the information to the console.
+
+    """
+    city = weather_data["name"]
+    weather_description = weather_data["weather"][0]["description"]
+    temperature = weather_data["main"]["temp"]
+
+    print(f"{city}", end="")
+    print(f"\t{weather_description.capitalize()}", end=" ")
+    print(f"({temperature}°{'F' if imperial else 'C'})")
+
 if __name__ == "__main__":
     user_args    = get_args_from_user()
     query_url    = build_weather_query(user_args.city, user_args.imperial)
     weather_data = get_weather_data(query_url)
-    print(weather_data)
+
+    display_weather_info(weather_data, user_args.imperial)
