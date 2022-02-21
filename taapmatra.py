@@ -1,7 +1,8 @@
-from urllib import parse, request
+from urllib import error, parse, request
 from configparser import ConfigParser
 import argparse
 import json
+import sys
 
 BASE_WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/weather"
 
@@ -47,9 +48,22 @@ def get_weather_data(query_url):
     :returns: A dictionary containing the information for a particular city.
 
     """
-    response = request.urlopen(query_url)
-    data = response.read()
-    return json.loads(data)
+    try:
+        response = request.urlopen(query_url)
+    except error.HTTPError as http_error:
+        if http_error.code == 401: # Auth problem
+            sys.exit("Access denied. Check your API key.")
+        elif http_error.code == 404: # Resource not found
+            sys.exit("Can't find weather data for this city.")
+        else:
+            sys.exit(f"Something went wrong. HTTP error code : {http_error.code}")
+
+    data     = response.read()
+
+    try:
+        return json.loads(data)
+    except json.JSONDecodeError:
+        sys.exit("Couldn't read the server response.")
 
 if __name__ == "__main__":
     user_args    = get_args_from_user()
